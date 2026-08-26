@@ -1,0 +1,13 @@
+{
+  "name": "audio-guide-qr",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "掃 QR Code 播放語音導覽的單頁網站 + QR 產生腳本",
+  "scripts": {
+    "qr": "node generate-qr.mjs"
+  },
+  "devDependencies": {
+    "qrcode": "^1.5.4"
+  }
+}
