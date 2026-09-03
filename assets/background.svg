@@ -1,0 +1,55 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 1800" preserveAspectRatio="xMidYMid slice">
+  <defs>
+    <radialGradient id="sky" cx="50%" cy="18%" r="85%">
+      <stop offset="0%" stop-color="#F3F0E8"/>
+      <stop offset="55%" stop-color="#ECE9E2"/>
+      <stop offset="100%" stop-color="#E2DED2"/>
+    </radialGradient>
+    <linearGradient id="hillFar" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#CFCBBB"/>
+      <stop offset="100%" stop-color="#C3BFAE"/>
+    </linearGradient>
+    <linearGradient id="hillNear" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#8E9A82"/>
+      <stop offset="100%" stop-color="#69765F"/>
+    </linearGradient>
+  </defs>
+
+  <rect x="0" y="0" width="1200" height="1800" fill="url(#sky)"/>
+
+  <!-- 遠山 -->
+  <path d="M0,760 Q160,690 320,740 T640,720 T960,760 T1200,730 L1200,900 L0,900 Z"
+        fill="url(#hillFar)" opacity="0.55"/>
+
+  <!-- 近山 -->
+  <path d="M0,860 Q220,780 460,850 T900,820 T1200,860 L1200,1000 L0,1000 Z"
+        fill="url(#hillNear)" opacity="0.5"/>
+
+  <!-- 菩提葉剪影群(左上) -->
+  <g fill="#55654D" opacity="0.10">
+    <path d="M120,140 C60,190 60,270 120,320 C130,360 170,400 200,410 C190,370 210,330 240,310
+             C300,270 300,180 200,120 C180,110 150,110 120,140 Z"/>
+    <path d="M120,410 L200,410 L165,470 Z"/>
+  </g>
+  <g fill="#55654D" opacity="0.08" transform="translate(180,40) scale(0.6) rotate(18)">
+    <path d="M120,140 C60,190 60,270 120,320 C130,360 170,400 200,410 C190,370 210,330 240,310
+             C300,270 300,180 200,120 C180,110 150,110 120,140 Z"/>
+    <path d="M120,410 L200,410 L165,470 Z"/>
+  </g>
+
+  <!-- 菩提葉剪影群(右下,近山前) -->
+  <g fill="#3E4A38" opacity="0.14" transform="translate(940,1500) scale(1.1) rotate(-12)">
+    <path d="M120,140 C60,190 60,270 120,320 C130,360 170,400 200,410 C190,370 210,330 240,310
+             C300,270 300,180 200,120 C180,110 150,110 120,140 Z"/>
+    <path d="M120,410 L200,410 L165,470 Z"/>
+  </g>
+  <g fill="#3E4A38" opacity="0.10" transform="translate(760,1620) scale(0.75) rotate(8)">
+    <path d="M120,140 C60,190 60,270 120,320 C130,360 170,400 200,410 C190,370 210,330 240,310
+             C300,270 300,180 200,120 C180,110 150,110 120,140 Z"/>
+    <path d="M120,410 L200,410 L165,470 Z"/>
+  </g>
+
+  <!-- 前景地面 -->
+  <rect x="0" y="960" width="1200" height="840" fill="#ECE9E2"/>
+  <path d="M0,960 Q300,930 600,960 T1200,960 L1200,1800 L0,1800 Z" fill="#E7E3D8"/>
+</svg>
