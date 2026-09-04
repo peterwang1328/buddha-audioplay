@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-<title>音頻導覽</title>
+<title>小菩提育苗園 · 音頻導覽</title>
 
 <!--
   ============================================================
@@ -61,9 +61,23 @@
 
   body {
     display: flex;
+    flex-direction: column;
     align-items: center;
     justify-content: center;
+    gap: clamp(20px, 5vh, 36px);
     padding: 24px;
+    /* 整組往上偏一點,讓下方插畫裡的孩子不被卡片壓到 */
+    padding-bottom: calc(24px + min(12vh, 88px));
+  }
+
+  /* 標題字(去背 PNG):寬度略窄於播放卡,視覺上形成上下呼應 */
+  .site-title {
+    width: 100%;
+    max-width: 372px;
+    height: auto;
+    display: block;
+    /* 背景是水彩插畫,加一層極淡的白暈讓墨色字在葉片上仍清晰 */
+    filter: drop-shadow(0 1px 3px rgba(255, 255, 255, 0.75));
   }
 
   .player-card {
@@ -186,6 +200,12 @@
     background: var(--line);
   }
 
+  /* 極矮的畫面(橫置手機)縮小標題並收掉上偏移,避免被裁切 */
+  @media (max-height: 480px) {
+    body { padding-bottom: 24px; gap: 16px; }
+    .site-title { max-width: 260px; }
+  }
+
   @media (prefers-reduced-motion: reduce) {
     .player.is-playing .waveform span { animation: none; height: 14px; }
     .play-btn { transition: none; }
@@ -198,6 +218,9 @@
 
 </head>
 <body>
+
+<img class="site-title" src="./assets/title.png"
+     alt="普彰精舍 小菩提育苗園" width="880" height="331" fetchpriority="high">
 
 <div class="player-card">
   <div class="player" id="player">
