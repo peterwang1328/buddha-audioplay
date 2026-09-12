@@ -14,6 +14,7 @@
     - 呼吸感假波形動畫(播放時律動,暫停時靜止)
     - 可拖曳快進/倒帶的進度條
     - 目前時間 / 總長度
+    - 音量調節滑桿(可靜音/還原),基礎音量透過 GainNode 放大為 1.5 倍
 
   ▍音檔路徑在 CONFIG.audioSrc,目前指向 ./audio/guide.mp3
 
@@ -200,6 +201,66 @@
     background: var(--line);
   }
 
+  .volume-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-top: 16px;
+    padding-top: 16px;
+    border-top: 1px solid var(--line);
+  }
+
+  .volume-btn {
+    flex: none;
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    background: none;
+    border: none;
+    padding: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--moss);
+    cursor: pointer;
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  .volume-btn svg { width: 18px; height: 18px; }
+
+  .volume-track {
+    -webkit-appearance: none;
+    appearance: none;
+    flex: 1;
+    height: 3px;
+    border-radius: 2px;
+    background: var(--line);
+    cursor: pointer;
+  }
+
+  .volume-track::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    background: var(--moss);
+    margin-top: -4.5px;
+  }
+
+  .volume-track::-moz-range-thumb {
+    width: 12px;
+    height: 12px;
+    border: none;
+    border-radius: 50%;
+    background: var(--moss);
+  }
+
+  .volume-track::-webkit-slider-runnable-track {
+    height: 3px;
+    border-radius: 2px;
+    background: var(--line);
+  }
+
   /* 極矮的畫面(橫置手機)縮小標題並收掉上偏移,避免被裁切 */
   @media (max-height: 480px) {
     body { padding-bottom: 24px; gap: 16px; }
@@ -246,6 +307,21 @@
       </div>
     </div>
   </div>
+
+  <div class="volume-row">
+    <button class="volume-btn" id="volumeBtn" aria-label="靜音">
+      <svg id="volumeIcon" viewBox="0 0 24 24" fill="none">
+        <path d="M4 9v6h4l5 5V4L8 9H4z" fill="currentColor"/>
+        <path d="M16.5 8.5a5 5 0 0 1 0 7" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/>
+        <path d="M19 6a8.5 8.5 0 0 1 0 12" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/>
+      </svg>
+      <svg id="muteIcon" viewBox="0 0 24 24" fill="none" style="display:none;">
+        <path d="M4 9v6h4l5 5V4L8 9H4z" fill="currentColor"/>
+        <path d="M16 9l5 6M21 9l-5 6" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/>
+      </svg>
+    </button>
+    <input type="range" class="volume-track" id="volumeSlider" value="100" min="0" max="100" step="1" aria-label="音量">
+  </div>
 </div>
 
 <!-- 實際播放用的音訊元素,不顯示原生控制列 -->
@@ -267,8 +343,70 @@
   const progress = document.getElementById('progress');
   const currentTimeEl = document.getElementById('currentTime');
   const durationEl = document.getElementById('duration');
+  const volumeBtn = document.getElementById('volumeBtn');
+  const volumeIcon = document.getElementById('volumeIcon');
+  const muteIcon = document.getElementById('muteIcon');
+  const volumeSlider = document.getElementById('volumeSlider');
 
   audio.src = CONFIG.audioSrc;
+
+  /* ============================================================
+     音量放大(Web Audio API GainNode)
+     ------------------------------------------------------------
+     原生 <audio>.volume 上限只有 1.0(100%),無法真正放大超過音檔
+     本身的音量。這裡改接一個 GainNode,把基礎音量放大到原本的 1.5
+     倍,音量滑桿的「滿格」對應的就是這個放大後的音量,往下拖曳則
+     依比例調降。若瀏覽器不支援 Web Audio API,則退回原生 volume
+     (上限維持 1.0,不會有放大效果)。
+     ============================================================ */
+  const BASE_VOLUME_MULTIPLIER = 1.5;
+  let audioCtx = null;
+  let gainNode = null;
+
+  try {
+    const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+    audioCtx = new AudioContextClass();
+    const sourceNode = audioCtx.createMediaElementSource(audio);
+    gainNode = audioCtx.createGain();
+    sourceNode.connect(gainNode).connect(audioCtx.destination);
+  } catch (err) {
+    console.error('無法建立音量放大用的 AudioContext,將使用原生音量:', err);
+  }
+
+  function resumeAudioContext() {
+    if (audioCtx && audioCtx.state === 'suspended') {
+      audioCtx.resume().catch(() => {});
+    }
+  }
+
+  let previousVolume = volumeSlider.value;
+
+  function applyVolume() {
+    const level = Number(volumeSlider.value) / 100; // 0 ~ 1
+    if (gainNode) {
+      gainNode.gain.value = level * BASE_VOLUME_MULTIPLIER;
+    } else {
+      audio.volume = Math.min(level, 1);
+    }
+    const isMuted = level === 0;
+    volumeIcon.style.display = isMuted ? 'none' : 'block';
+    muteIcon.style.display = isMuted ? 'block' : 'none';
+    volumeBtn.setAttribute('aria-label', isMuted ? '取消靜音' : '靜音');
+  }
+
+  volumeSlider.addEventListener('input', applyVolume);
+
+  volumeBtn.addEventListener('click', () => {
+    if (Number(volumeSlider.value) > 0) {
+      previousVolume = volumeSlider.value;
+      volumeSlider.value = 0;
+    } else {
+      volumeSlider.value = Number(previousVolume) > 0 ? previousVolume : 100;
+    }
+    applyVolume();
+  });
+
+  applyVolume();
 
   function formatTime(sec) {
     if (!isFinite(sec)) return "--:--";
@@ -309,6 +447,7 @@
   }
 
   playBtn.addEventListener('click', () => {
+    resumeAudioContext();
     if (audio.paused) {
       audio.play().catch(err => {
         console.error('播放失敗,請確認音檔路徑是否正確:', err);
@@ -354,6 +493,7 @@
      ============================================================ */
   function attemptAutoplay() {
     try {
+      resumeAudioContext();
       const p = audio.play();
       if (p && typeof p.then === 'function') {
         p.catch(() => { /* 自動播放被瀏覽器擋下,維持 fallback UI */ });
