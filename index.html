@@ -14,7 +14,8 @@
     - 呼吸感假波形動畫(播放時律動,暫停時靜止)
     - 可拖曳快進/倒帶的進度條
     - 目前時間 / 總長度
-    - 音量調節滑桿(可靜音/還原),基礎音量透過 GainNode 放大為 1.5 倍
+    - 音量調節滑桿(可靜音/還原,標有原始音量刻度),預設音量為原始
+      音量,可拖曳到滿格放大至 1.5 倍
 
   ▍音檔路徑在 CONFIG.audioSrc,目前指向 ./audio/guide.mp3
 
@@ -228,10 +229,30 @@
 
   .volume-btn svg { width: 18px; height: 18px; }
 
+  .volume-track-wrap {
+    position: relative;
+    flex: 1;
+    display: flex;
+    align-items: center;
+  }
+
+  /* 標記「原始(放大前)音量」的刻度,位置由 JS 依 BASE_VOLUME_MULTIPLIER 計算 */
+  .volume-track-mark {
+    position: absolute;
+    top: 50%;
+    width: 2px;
+    height: 10px;
+    border-radius: 1px;
+    background: var(--ink-soft);
+    opacity: 0.55;
+    transform: translate(-50%, -50%);
+    pointer-events: none;
+  }
+
   .volume-track {
     -webkit-appearance: none;
     appearance: none;
-    flex: 1;
+    width: 100%;
     height: 3px;
     border-radius: 2px;
     background: var(--line);
@@ -320,7 +341,10 @@
         <path d="M16 9l5 6M21 9l-5 6" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/>
       </svg>
     </button>
-    <input type="range" class="volume-track" id="volumeSlider" value="100" min="0" max="100" step="1" aria-label="音量">
+    <div class="volume-track-wrap">
+      <span class="volume-track-mark" id="volumeMark" aria-hidden="true"></span>
+      <input type="range" class="volume-track" id="volumeSlider" value="67" min="0" max="100" step="0.1" aria-label="音量">
+    </div>
   </div>
 </div>
 
@@ -347,6 +371,7 @@
   const volumeIcon = document.getElementById('volumeIcon');
   const muteIcon = document.getElementById('muteIcon');
   const volumeSlider = document.getElementById('volumeSlider');
+  const volumeMark = document.getElementById('volumeMark');
 
   audio.src = CONFIG.audioSrc;
 
@@ -354,12 +379,15 @@
      音量放大(Web Audio API GainNode)
      ------------------------------------------------------------
      原生 <audio>.volume 上限只有 1.0(100%),無法真正放大超過音檔
-     本身的音量。這裡改接一個 GainNode,把基礎音量放大到原本的 1.5
-     倍,音量滑桿的「滿格」對應的就是這個放大後的音量,往下拖曳則
-     依比例調降。若瀏覽器不支援 Web Audio API,則退回原生 volume
-     (上限維持 1.0,不會有放大效果)。
+     本身的音量。這裡改接一個 GainNode,滑桿滿格(100)對應放大
+     BASE_VOLUME_MULTIPLIER 倍的音量,可作為需要更大聲時的上限。
+     滑桿上會標出「原始(放大前,gain = 1.0)」音量的刻度,且頁面
+     開啟時的預設音量就停在這個刻度上,不會一開始就是放大過的音量。
+     若瀏覽器不支援 Web Audio API,則退回原生 volume(上限維持 1.0,
+     不會有放大效果)。
      ============================================================ */
   const BASE_VOLUME_MULTIPLIER = 1.5;
+  const ORIGINAL_VOLUME_PERCENT = 100 / BASE_VOLUME_MULTIPLIER;
   let audioCtx = null;
   let gainNode = null;
 
@@ -378,6 +406,9 @@
       audioCtx.resume().catch(() => {});
     }
   }
+
+  volumeMark.style.left = ORIGINAL_VOLUME_PERCENT + '%';
+  volumeSlider.value = ORIGINAL_VOLUME_PERCENT;
 
   let previousVolume = volumeSlider.value;
 
